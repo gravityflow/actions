@@ -1,0 +1,104 @@
+name: Build+Release - Smoke Test
+on:
+  workflow_call:
+    inputs:
+      extSlug:
+        type: string
+        required: true
+      buildVersion:
+        type: string
+        description: 'Build Version'
+        required: true
+      commitHash:
+        type: string
+        description: 'Branch/Commit'
+        required: true
+        default: 'master'
+      createRelease:
+        type: boolean
+        description: Create GitHub Release?
+jobs:
+
+  create-build:
+    runs-on: ubuntu-latest
+    steps:
+    
+    - name: Checkout code
+      uses: actions/checkout@v3
+      with:
+        ref: ${{ inputs.commitHash }}
+
+    - name: Define Node Version
+      id: prep_env_vars
+      run: |
+        NVMRC=$(cat .nvmrc)
+        echo "NVMRC=$NVMRC" >> $GITHUB_ENV
+   
+    - name: Define Artifact Filename - Branch
+      if:  ${{ inputs.commitHash == 'master' || inputs.commitHash == 'develop' }}
+      run: |
+        echo "ARTIFACT_ZIP=${{ inputs.extSlug }}_${{ inputs.buildVersion }}.zip" >> $GITHUB_ENV
+    
+    - name: Define Artifact Filename - CommitHash
+      if: ${{ inputs.commitHash != 'master' && inputs.commitHash != 'develop' }}
+      run: |
+        echo "ARTIFACT_ZIP=${{ inputs.extSlug }}_${{ inputs.buildVersion }}-$(cut -c 1-7 <<< ${{ inputs.commitHash }}).zip" >> $GITHUB_ENV
+
+    - name: Setup Node.js - ${{ env.NVMRC }}
+      uses: actions/setup-node@v3
+      with:
+        node-version: ${{ env.NVMRC }}
+
+    - name: Perform NPM + Grunt Tasks
+      run: |
+        npm install
+        grunt gh-publish
+      env:
+        BUILDVERSION: ${{ inputs.buildVersion }}
+        COMMITHASH: ${{ inputs.commitHash }}
+        #AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        #AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        #AWS_S3_BUCKET_UPLOAD_ZIP: ${{ secrets.AWS_S3_BUCKET_UPLOAD_ZIP }}
+        #AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
+
+    - name: Assign build .zip as workflow artifact
+      uses: actions/upload-artifact@v1
+      with:
+        name: ${{ env.ARTIFACT_ZIP }}
+        path: ${{ env.ARTIFACT_ZIP }}
+
+    - name: Create GitHub Draft Release
+      uses: softprops/action-gh-release@v1
+      if: ${{ inputs.createRelease }}
+      id: draft-release
+      with:
+        body_path: change_log.txt
+        files: ${{ env.ARTIFACT_ZIP }}
+        draft: true
+        name: ${{ inputs.buildVersion }}
+        target_commitish: ${{ inputs.commitHash }}
+
+    - name: slack-notify
+      if: ${{ inputs.createRelease }}
+      uses: slackapi/slack-github-action@v1.18.0
+      with:
+        payload: |
+          {
+            "text": "GitHub Release for ${{ inputs.extSlug }} ${{ inputs.buildVersion }} drafted\n",
+            "blocks": [
+              {
+                "type": "section",
+                "text": {
+                  "type": "mrkdwn",
+                  "text": "A new GitHub Release for ${{ inputs.extSlug }} ${{ inputs.buildVersion }} has been drafted\n. You can access it at ${{ steps.draft-release.outputs.url }}"
+                }
+              }
+            ]
+          }
+      env:
+        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
+        SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
+
+    - name: Clean
+      run: |
+        grunt gh-clean
