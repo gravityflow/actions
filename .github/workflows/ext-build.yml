@@ -1,4 +1,4 @@
-name: Build+Release - Smoke Test
+name: Build + Release Extension
 on:
   workflow_call:
     inputs:
@@ -56,10 +56,10 @@ jobs:
       env:
         BUILDVERSION: ${{ inputs.buildVersion }}
         COMMITHASH: ${{ inputs.commitHash }}
-        #AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        #AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        #AWS_S3_BUCKET_UPLOAD_ZIP: ${{ secrets.AWS_S3_BUCKET_UPLOAD_ZIP }}
-        #AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
+        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        AWS_S3_BUCKET_UPLOAD_ZIP: ${{ secrets.AWS_S3_BUCKET_UPLOAD_ZIP }}
+        AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
 
     - name: Assign build .zip as workflow artifact
       uses: actions/upload-artifact@v1
