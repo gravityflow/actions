@@ -1,0 +1,40 @@
+name: On Release Publish
+on:
+  workflow_call:
+    inputs:
+      extSlug:
+        type: string
+        required: true
+
+jobs:
+  announce-release:
+    runs-on: ubuntu-latest
+    steps:
+
+    - name: Get Release Info
+      id: rel_info
+      uses: cardinalby/git-get-release-action@v1
+      env:
+        GITHUB_TOKEN: ${{ github.token }}
+      with:
+        commitSha: ${{ github.sha }}
+    
+    - name: Slack Notify
+      uses: slackapi/slack-github-action@v1.18.0
+      with:
+        payload: |
+          {
+            "text": "GitHub Release for ${{ inputs.extSlug }} tag/${{ steps.rel_info.outputs.tag_name }} has been published!\n",
+            "blocks": [
+              {
+                "type": "section",
+                "text": {
+                  "type": "mrkdwn",
+                  "text": "GitHub Release for ${{ inputs.extSlug }} tag/${{ steps.rel_info.outputs.tag_name }} has been published!\n. You can access it at ${{ steps.rel_info.outputs.html_url }}\nIt was generated against commit ${{ steps.rel_info.outputs.target_commitish }}\n"
+                }
+              }
+            ]
+          }
+      env:
+        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
+        SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
