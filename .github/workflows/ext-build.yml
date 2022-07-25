@@ -49,9 +49,23 @@ jobs:
       with:
         node-version: ${{ env.NVMRC }}
 
-    - name: Perform NPM + Grunt Tasks
+    - name: Setup PHP
+      if:  ${{ inputs.commitHash != 'gravityflowpdf' }}
+      uses: shivammathur/setup-php@v2
+      with:
+      php-version: 7.4
+          extensions: dom, curl, libxml, mbstring, zip, pcntl, pdo, sqlite, pdo_sqlite, mysql, mysqli, pdo_mysql, bcmath, soap, gd, exif, iconv, imagick
+
+    - name: Perform Build (NPM, Composer, Grunt)
+      if:  ${{ inputs.commitHash != 'gravityflowpdf' }}
       run: |
         npm install
+        grunt gh-clean
+        composer install --no-dev
+        composer config --list --global
+        export PATH=`composer config --list --global | grep '\[home\]' | { read a; echo "${a#* }/vendor/bin:$PATH"; }`
+        php --version
+        grunt gh-clean
         grunt gh-publish
       env:
         BUILDVERSION: ${{ inputs.buildVersion }}
@@ -61,6 +75,21 @@ jobs:
         AWS_S3_BUCKET_UPLOAD_ZIP: ${{ secrets.AWS_S3_BUCKET_UPLOAD_ZIP }}
         AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
 
+    - name: Perform Build (NPM, Grunt)
+      if:  ${{ inputs.commitHash != 'gravityflowpdf' }}
+      run: |
+        npm install
+        grunt gh-clean
+        grunt gh-publish
+      env:
+        BUILDVERSION: ${{ inputs.buildVersion }}
+        COMMITHASH: ${{ inputs.commitHash }}
+        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        AWS_S3_BUCKET_UPLOAD_ZIP: ${{ secrets.AWS_S3_BUCKET_UPLOAD_ZIP }}
+        AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
+
+   
     - name: Assign build .zip as workflow artifact
       uses: actions/upload-artifact@v1
       with:
