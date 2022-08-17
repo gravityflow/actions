@@ -50,7 +50,7 @@ jobs:
         node-version: ${{ env.NVMRC }}
 
     - name: Setup PHP
-      if:  ${{ inputs.extSlug != 'gravityflowpdf' }}
+      if:  ${{ inputs.extSlug == 'gravityflowpdf' }}
       uses: shivammathur/setup-php@v2
       with:
         php-version: 7.4
