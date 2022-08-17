@@ -57,7 +57,7 @@ jobs:
         extensions: dom, curl, libxml, mbstring, zip, pcntl, pdo, sqlite, pdo_sqlite, mysql, mysqli, pdo_mysql, bcmath, soap, gd, exif, iconv, imagick
 
     - name: Perform Build (NPM, Composer, Grunt)
-      if:  ${{ inputs.commitHash != 'gravityflowpdf' }}
+      if:  ${{ inputs.commitHash == 'gravityflowpdf' }}
       run: |
         npm install
         grunt gh-clean
