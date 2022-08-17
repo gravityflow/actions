@@ -50,14 +50,14 @@ jobs:
         node-version: ${{ env.NVMRC }}
 
     - name: Setup PHP
-      if:  ${{ inputs.commitHash != 'gravityflowpdf' }}
+      if:  ${{ inputs.extSlug != 'gravityflowpdf' }}
       uses: shivammathur/setup-php@v2
       with:
         php-version: 7.4
         extensions: dom, curl, libxml, mbstring, zip, pcntl, pdo, sqlite, pdo_sqlite, mysql, mysqli, pdo_mysql, bcmath, soap, gd, exif, iconv, imagick
 
     - name: Perform Build (NPM, Composer, Grunt)
-      if:  ${{ inputs.commitHash == 'gravityflowpdf' }}
+      if:  ${{ inputs.extSlug == 'gravityflowpdf' }}
       run: |
         npm install
         grunt gh-clean
@@ -76,7 +76,7 @@ jobs:
         AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
 
     - name: Perform Build (NPM, Grunt)
-      if:  ${{ inputs.commitHash != 'gravityflowpdf' }}
+      if:  ${{ inputs.extSlug != 'gravityflowpdf' }}
       run: |
         npm install
         grunt gh-clean
