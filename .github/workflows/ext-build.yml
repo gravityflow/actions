@@ -42,7 +42,7 @@ jobs:
     - name: Define Artifact Filename - CommitHash
       if: ${{ inputs.commitHash != 'master' && inputs.commitHash != 'develop' }}
       run: |
-        echo "ARTIFACT_ZIP=${{ inputs.extSlug }}_$(cut -c 1-7 <<< ${{ inputs.commitHash }}).zip" >> $GITHUB_ENV
+        echo "ARTIFACT_ZIP=${{ inputs.extSlug }}_${{ inputs.buildVersion }}_$(cut -c 1-7 <<< ${{ inputs.commitHash }}).zip" >> $GITHUB_ENV
 
     - name: Setup Node.js - ${{ env.NVMRC }}
       uses: actions/setup-node@v3
